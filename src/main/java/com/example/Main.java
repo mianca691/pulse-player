@@ -1,8 +1,5 @@
 package com.example;
 
-import java.io.File;
-import java.util.List;
-
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -11,27 +8,14 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
+import javafx.scene.Group;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
-import javafx.scene.control.Separator;
-import javafx.scene.control.Slider;
-import javafx.scene.control.SplitPane;
-import javafx.scene.control.TextInputControl;
+import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
@@ -40,11 +24,16 @@ import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.Stop;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+
+import java.io.File;
+import java.util.List;
+import java.util.function.Consumer;
 
 public class Main extends Application {
 
@@ -75,8 +64,61 @@ public class Main extends Application {
     private static final String MUTED     = "#94a3b8";
     private static final String PANEL     = "rgba(20,20,45,0.85)";
 
-    // ================= LOGO PATH =================
+    // ================= LOGO =================
     private static final String LOGO_PATH = "/logo.jpg";
+
+    // ============================================================
+    // VECTOR ICONS (SVG paths, 24x24 grid)
+    // ============================================================
+    private static final class Icons {
+        static final String PLAY   = "M8 5v14l11-7z";
+        static final String PAUSE  = "M6 19h4V5H6v14zm8-14v14h4V5h-4z";
+        static final String STOP   = "M6 6h12v12H6z";
+        static final String NEXT   = "M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z";
+        static final String PREV   = "M6 6h2v12H6zm3.5 6l8.5 6V6z";
+        static final String VOLUME = "M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z";
+        static final String MUTE   = "M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z";
+        static final String ADD    = "M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z";
+        static final String REMOVE = "M19 13H5v-2h14v2z";
+        static final String TRASH  = "M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z";
+        static final String MUSIC  = "M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z";
+        static final String VIDEO  = "M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z";
+        static final String FILE   = "M6 2c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13z";
+    }
+
+    /** Builds a themed SVG icon as a StackPane wrapping an SVGPath. */
+    private static StackPane icon(String path, double size, Color color) {
+        SVGPath svg = new SVGPath();
+        svg.setContent(path);
+        svg.setFill(color);
+
+        double scale = size / 24.0;
+        svg.setScaleX(scale);
+        svg.setScaleY(scale);
+
+        Group group = new Group(svg);
+        StackPane holder = new StackPane(group);
+        holder.setMinSize(size, size);
+        holder.setPrefSize(size, size);
+        holder.setMaxSize(size, size);
+        return holder;
+    }
+
+    /** Updates an existing SVG icon in-place (used to swap PLAY/PAUSE etc). */
+    private static void swapIcon(Region iconNode, String newPath, Color color) {
+        if (!(iconNode instanceof StackPane)) return;
+        StackPane holder = (StackPane) iconNode;
+        holder.getChildren().forEach(n -> {
+            if (n instanceof Group) {
+                ((Group) n).getChildren().forEach(c -> {
+                    if (c instanceof SVGPath) {
+                        ((SVGPath) c).setContent(newPath);
+                        ((SVGPath) c).setFill(color);
+                    }
+                });
+            }
+        });
+    }
 
     // ============================================================
     // START
@@ -92,15 +134,16 @@ public class Main extends Application {
         root.setBottom(buildHintsBar());
 
         Scene scene = new Scene(root, 1050, 680);
-        scene.setOnKeyPressed(this::handleKeyPress);
 
-        stage.setTitle("🎵 Pulse Player — JavaFX Media Center");
+        // KEY FIX: event FILTER so no control consumes keys before us
+        scene.addEventFilter(KeyEvent.KEY_PRESSED, this::handleKeyPress);
+
+        stage.setTitle("Pulse Player - JavaFX Media Center");
         stage.setScene(scene);
         stage.setMinWidth(900);
         stage.setMinHeight(580);
         stage.setOnCloseRequest(e -> shutdown());
 
-        // ---------- WINDOW ICON (taskbar + window corner) ----------
         try {
             Image windowIcon = new Image(getClass().getResourceAsStream(LOGO_PATH));
             stage.getIcons().add(windowIcon);
@@ -109,24 +152,22 @@ public class Main extends Application {
         }
 
         stage.show();
+        root.requestFocus();
     }
 
     // ============================================================
-    // TOP BAR (with logo)
+    // TOP BAR
     // ============================================================
     private HBox buildTopBar() {
-        // ---------- LOGO ----------
         ImageView logoView = loadLogo(38);
         DropShadow logoGlow = new DropShadow(14, Color.web(ACCENT, 0.75));
         logoView.setEffect(logoGlow);
 
-        // Round the corners of the JPG (since JPG has no transparency)
         Rectangle clip = new Rectangle(38, 38);
         clip.setArcWidth(12);
         clip.setArcHeight(12);
         logoView.setClip(clip);
 
-        // Small neon border ring around the logo
         StackPane logoFrame = new StackPane(logoView);
         logoFrame.setStyle("-fx-background-color: linear-gradient(to bottom right, #8b5cf6, #6366f1);"
                 + "-fx-background-radius: 12;"
@@ -134,7 +175,6 @@ public class Main extends Application {
         logoFrame.setMaxSize(42, 42);
         logoFrame.setMinSize(42, 42);
 
-        // ---------- TITLE ----------
         Label title = new Label("PULSE PLAYER");
         title.setFont(Font.font("System", FontWeight.BOLD, 20));
         title.setTextFill(new LinearGradient(0, 0, 1, 0, true, CycleMethod.NO_CYCLE,
@@ -144,8 +184,7 @@ public class Main extends Application {
         HBox titleBox = new HBox(12, logoFrame, title);
         titleBox.setAlignment(Pos.CENTER_LEFT);
 
-        // ---------- STATUS ----------
-        statusLabel = new Label("Ready — press A or click Add Files");
+        statusLabel = new Label("Ready - press A or click Add Files");
         statusLabel.setTextFill(Color.web(MUTED));
         statusLabel.setFont(Font.font("System", 12));
 
@@ -161,9 +200,6 @@ public class Main extends Application {
         return bar;
     }
 
-    /**
-     * Loads the logo image from resources at the given size.
-     */
     private ImageView loadLogo(double size) {
         ImageView iv = new ImageView();
         try {
@@ -180,7 +216,7 @@ public class Main extends Application {
     }
 
     // ============================================================
-    // CENTER — SPLIT VIDEO + PLAYLIST
+    // CENTER
     // ============================================================
     private SplitPane buildCenterArea() {
         SplitPane split = new SplitPane(buildVideoPanel(), buildPlaylistPanel());
@@ -189,12 +225,11 @@ public class Main extends Application {
         return split;
     }
 
-    // ---------- LEFT: VIDEO + CONTROLS ----------
     private VBox buildVideoPanel() {
         mediaView = new MediaView();
         mediaView.setPreserveRatio(true);
 
-        placeholderLabel = new Label("🎬\n\nNo media loaded\n\nPress 'A' or click Add Files to begin");
+        placeholderLabel = new Label("No media loaded\n\nPress A or click Add Files to begin");
         placeholderLabel.setTextFill(Color.web("#64748b"));
         placeholderLabel.setFont(Font.font("System", 15));
         placeholderLabel.setStyle("-fx-text-alignment: center; -fx-line-spacing: 4;");
@@ -210,7 +245,6 @@ public class Main extends Application {
         videoFrame.setEffect(glow);
         VBox.setVgrow(videoFrame, Priority.ALWAYS);
 
-        // Progress row
         currentTimeLabel = makeTimeLabel("00:00");
         totalTimeLabel   = makeTimeLabel("00:00");
 
@@ -226,11 +260,11 @@ public class Main extends Application {
         HBox progressRow = new HBox(10, currentTimeLabel, progressSlider, totalTimeLabel);
         progressRow.setAlignment(Pos.CENTER);
 
-        // Control buttons
-        Button prevBtn = makeCtrlBtn("⏮");
-        playBtn = makePlayBtn();
-        Button stopBtn = makeCtrlBtn("⏹");
-        Button nextBtn = makeCtrlBtn("⏭");
+        // ---- Icon buttons ----
+        Button prevBtn = makeCtrlBtn(Icons.PREV, "Previous (P)");
+        playBtn        = makePlayBtn();
+        Button stopBtn = makeCtrlBtn(Icons.STOP, "Stop (S)");
+        Button nextBtn = makeCtrlBtn(Icons.NEXT, "Next (N)");
 
         prevBtn.setOnAction(e -> playPrevious());
         playBtn.setOnAction(e -> togglePlayPause());
@@ -240,16 +274,14 @@ public class Main extends Application {
         Separator sep = new Separator();
         sep.setOrientation(Orientation.VERTICAL);
 
-        Label volIcon = new Label("🔊");
-        volIcon.setFont(Font.font(15));
-        volIcon.setTextFill(Color.web(TEXT));
+        Region volIcon = icon(Icons.VOLUME, 18, Color.web(TEXT));
 
         volumeSlider = new Slider(0, 100, 70);
         volumeSlider.setPrefWidth(110);
         volumeLabel = makeTimeLabel("70%");
         volumeLabel.setMinWidth(48);
 
-        muteBtn = makeCtrlBtn("🔇");
+        muteBtn = makeCtrlBtn(Icons.MUTE, "Mute (M)");
         muteBtn.setOnAction(e -> toggleMute());
 
         volumeSlider.valueProperty().addListener((obs, oldV, newV) -> {
@@ -258,11 +290,11 @@ public class Main extends Application {
             volumeLabel.setText((int) newV.doubleValue() + "%");
             if (vol > 0) {
                 isMuted = false;
-                muteBtn.setText("🔇");
+                swapIcon((Region) muteBtn.getGraphic(), Icons.MUTE, Color.web(TEXT));
             }
         });
 
-        HBox controls = new HBox(12, prevBtn, playBtn, stopBtn, nextBtn, sep,
+        HBox controls = new HBox(10, prevBtn, playBtn, stopBtn, nextBtn, sep,
                 volIcon, volumeSlider, volumeLabel, muteBtn);
         controls.setAlignment(Pos.CENTER);
         controls.setPadding(new Insets(6, 0, 0, 0));
@@ -272,9 +304,8 @@ public class Main extends Application {
         return panel;
     }
 
-    // ---------- RIGHT: PLAYLIST ----------
     private VBox buildPlaylistPanel() {
-        Label sectionTitle = new Label("📋 PLAYLIST");
+        Label sectionTitle = new Label("PLAYLIST");
         sectionTitle.setTextFill(Color.web(TEXT));
         sectionTitle.setFont(Font.font("System", FontWeight.BOLD, 13));
 
@@ -296,7 +327,7 @@ public class Main extends Application {
                 + "-fx-border-width: 1;");
         VBox.setVgrow(playlistView, Priority.ALWAYS);
 
-        // Cell factory — emoji icon per media type
+        // Cells with vector icons per file type
         playlistView.setCellFactory(lv -> new ListCell<>() {
             @Override
             protected void updateItem(File file, boolean empty) {
@@ -306,19 +337,21 @@ public class Main extends Application {
                     setGraphic(null);
                 } else {
                     String ext = getExtension(file.getName()).toLowerCase();
-                    String icon = switch (ext) {
-                        case "mp4", "m4v", "mov", "avi", "mkv" -> "🎬";
-                        case "mp3", "wav", "aac", "m4a"          -> "🎵";
-                        default -> "📁";
+                    String path = switch (ext) {
+                        case "mp4", "m4v", "mov", "avi", "mkv" -> Icons.VIDEO;
+                        case "mp3", "wav", "aac", "m4a"          -> Icons.MUSIC;
+                        default                                  -> Icons.FILE;
                     };
-                    setText(icon + "  " + file.getName());
+                    setGraphic(icon(path, 16, Color.web(ACCENT)));
+                    setText(file.getName());
+                    setContentDisplay(ContentDisplay.LEFT);
+                    setGraphicTextGap(10);
                     setTextFill(Color.web(TEXT));
                     setFont(Font.font("System", 13));
                 }
             }
         });
 
-        // Double-click to play
         playlistView.setOnMouseClicked(e -> {
             if (e.getClickCount() == 2) {
                 int idx = playlistView.getSelectionModel().getSelectedIndex();
@@ -326,7 +359,6 @@ public class Main extends Application {
             }
         });
 
-        // Count binding
         playlistCountLabel.textProperty().bind(
             Bindings.createStringBinding(
                 () -> playlist.size() + (playlist.size() == 1 ? " item" : " items"),
@@ -334,10 +366,12 @@ public class Main extends Application {
             )
         );
 
-        // Action buttons
-        Button addBtn    = makeActionBtn("➕ Add Files", "linear-gradient(to right, #10b981, #059669)");
-        Button removeBtn = makeActionBtn("➖ Remove",    "linear-gradient(to right, #f59e0b, #d97706)");
-        Button clearBtn  = makeActionBtn("🗑 Clear Playlist", "linear-gradient(to right, #ef4444, #b91c1c)");
+        Button addBtn    = makeIconTextBtn(Icons.ADD, "Add Files",
+                "linear-gradient(to right, #10b981, #059669)");
+        Button removeBtn = makeIconTextBtn(Icons.REMOVE, "Remove",
+                "linear-gradient(to right, #f59e0b, #d97706)");
+        Button clearBtn  = makeIconTextBtn(Icons.TRASH, "Clear Playlist",
+                "linear-gradient(to right, #ef4444, #b91c1c)");
 
         addBtn.setOnAction(e -> addFiles());
         removeBtn.setOnAction(e -> removeSelected());
@@ -357,26 +391,36 @@ public class Main extends Application {
     }
 
     // ============================================================
-    // BOTTOM HINTS BAR
+    // BOTTOM HINTS BAR (with mini icons)
     // ============================================================
     private HBox buildHintsBar() {
-        Label header = new Label("⌨ SHORTCUTS:");
+        Label header = new Label("SHORTCUTS:");
         header.setTextFill(Color.web(ACCENT));
         header.setFont(Font.font("System", FontWeight.BOLD, 11));
 
-        HBox bar = new HBox(10, header);
+        HBox bar = new HBox(8, header);
         bar.setAlignment(Pos.CENTER);
         bar.setPadding(new Insets(9, 16, 9, 16));
 
         String[][] hints = {
-                {"Space", "Play/Pause"}, {"S", "Stop"}, {"N", "Next"}, {"P", "Previous"},
-                {"↑/↓", "Volume"},       {"M", "Mute"}, {"A", "Add"},  {"Del", "Remove"}
+                {"Space", "Play/Pause", Icons.PLAY},
+                {"S",     "Stop",       Icons.STOP},
+                {"N",     "Next",       Icons.NEXT},
+                {"P",     "Previous",   Icons.PREV},
+                {"Up/Down", "Volume",   Icons.VOLUME},
+                {"M",     "Mute",       Icons.MUTE},
+                {"A",     "Add",        Icons.ADD},
+                {"Del",   "Remove",     Icons.REMOVE}
         };
         for (String[] h : hints) {
+            Region ic = icon(h[2], 13, Color.web(ACCENT));
             Label lbl = new Label(h[0] + " = " + h[1]);
+            lbl.setGraphic(ic);
+            lbl.setContentDisplay(ContentDisplay.LEFT);
+            lbl.setGraphicTextGap(6);
             lbl.setTextFill(Color.web(MUTED));
             lbl.setFont(Font.font("System", 11));
-            lbl.setPadding(new Insets(2, 8, 2, 8));
+            lbl.setPadding(new Insets(2, 10, 2, 8));
             lbl.setStyle("-fx-background-color: rgba(51,65,85,0.5); -fx-background-radius: 10;");
             bar.getChildren().add(lbl);
         }
@@ -388,7 +432,7 @@ public class Main extends Application {
     }
 
     // ============================================================
-    // KEYBOARD HANDLING
+    // KEYBOARD HANDLING — attached via addEventFilter
     // ============================================================
     private void handleKeyPress(KeyEvent event) {
         if (event.getTarget() instanceof TextInputControl) return;
@@ -413,36 +457,33 @@ public class Main extends Application {
     private void togglePlayPause() {
         if (mediaPlayer == null) {
             if (!playlist.isEmpty()) playIndex(0);
-            else setStatus("⚠ Playlist empty — add files first (press A)");
+            else setStatus("Playlist empty - add files first (press A)");
             return;
         }
         MediaPlayer.Status st = mediaPlayer.getStatus();
         if (st == MediaPlayer.Status.PLAYING) {
             mediaPlayer.pause();
-            playBtn.setText("▶");
-            setStatus("⏸ Paused");
+            swapIcon((Region) playBtn.getGraphic(), Icons.PLAY, Color.WHITE);
+            setStatus("Paused");
         } else if (st == MediaPlayer.Status.PAUSED
                 || st == MediaPlayer.Status.READY
                 || st == MediaPlayer.Status.STOPPED) {
             mediaPlayer.play();
-            playBtn.setText("⏸");
-            setStatus("▶ Playing");
+            swapIcon((Region) playBtn.getGraphic(), Icons.PAUSE, Color.WHITE);
+            setStatus("Playing");
         }
     }
 
     private void stopMedia() {
         if (mediaPlayer != null) {
             mediaPlayer.stop();
-            playBtn.setText("▶");
+            swapIcon((Region) playBtn.getGraphic(), Icons.PLAY, Color.WHITE);
             progressSlider.setValue(0);
             currentTimeLabel.setText("00:00");
-            setStatus("⏹ Stopped");
+            setStatus("Stopped");
         }
     }
 
-    // ============================================================
-    // NEXT / PREVIOUS / VOLUME
-    // ============================================================
     private void playNext() {
         if (playlist.isEmpty()) return;
         playIndex((currentIndex + 1) % playlist.size());
@@ -461,7 +502,7 @@ public class Main extends Application {
     private void bumpVolume(double delta) {
         double v = Math.max(0, Math.min(100, volumeSlider.getValue() + delta));
         volumeSlider.setValue(v);
-        setStatus("🔊 Volume: " + (int) v + "%");
+        setStatus("Volume: " + (int) v + "%");
     }
 
     private void toggleMute() {
@@ -469,15 +510,15 @@ public class Main extends Application {
         if (isMuted) {
             mediaPlayer.setVolume(volumeBeforeMute);
             volumeSlider.setValue(volumeBeforeMute * 100);
-            muteBtn.setText("🔇");
+            swapIcon((Region) muteBtn.getGraphic(), Icons.MUTE, Color.web(TEXT));
             isMuted = false;
-            setStatus("🔊 Unmuted");
+            setStatus("Unmuted");
         } else {
             volumeBeforeMute = volumeSlider.getValue() / 100.0;
             mediaPlayer.setVolume(0);
-            muteBtn.setText("🔊");
+            swapIcon((Region) muteBtn.getGraphic(), Icons.VOLUME, Color.web(TEXT));
             isMuted = true;
-            setStatus("🔇 Muted");
+            setStatus("Muted");
         }
     }
 
@@ -497,7 +538,7 @@ public class Main extends Application {
         List<File> files = chooser.showOpenMultipleDialog(playlistView.getScene().getWindow());
         if (files != null && !files.isEmpty()) {
             playlist.addAll(files);
-            setStatus("➕ Added " + files.size() + " file(s)");
+            setStatus("Added " + files.size() + " file(s)");
             if (currentIndex == -1) Platform.runLater(() -> playIndex(0));
         }
     }
@@ -505,7 +546,7 @@ public class Main extends Application {
     private void removeSelected() {
         File selected = playlistView.getSelectionModel().getSelectedItem();
         if (selected == null) {
-            setStatus("⚠ Select a file to remove");
+            setStatus("Select a file to remove");
             return;
         }
         int idx = playlist.indexOf(selected);
@@ -523,14 +564,14 @@ public class Main extends Application {
                 playIndex(Math.min(idx, playlist.size() - 1));
             } else {
                 currentIndex = -1;
-                playBtn.setText("▶");
+                swapIcon((Region) playBtn.getGraphic(), Icons.PLAY, Color.WHITE);
                 resetTimeLabels();
             }
         } else {
             playlist.remove(idx);
             if (idx < currentIndex) currentIndex--;
         }
-        setStatus("➖ Removed: " + selected.getName());
+        setStatus("Removed: " + selected.getName());
     }
 
     private void clearPlaylist() {
@@ -549,9 +590,9 @@ public class Main extends Application {
                 playlist.clear();
                 currentIndex = -1;
                 placeholderLabel.setVisible(true);
-                playBtn.setText("▶");
+                swapIcon((Region) playBtn.getGraphic(), Icons.PLAY, Color.WHITE);
                 resetTimeLabels();
-                setStatus("🗑 Playlist cleared");
+                setStatus("Playlist cleared");
             }
         });
     }
@@ -587,7 +628,7 @@ public class Main extends Application {
                 progressSlider.setMin(0);
                 progressSlider.setMax(total.toSeconds());
                 totalTimeLabel.setText(formatTime(total));
-                setStatus("▶ Playing: " + file.getName());
+                setStatus("Playing: " + file.getName());
             });
 
             mediaPlayer.setOnEndOfMedia(() -> {
@@ -595,21 +636,21 @@ public class Main extends Application {
                 else {
                     mediaPlayer.seek(Duration.ZERO);
                     mediaPlayer.pause();
-                    playBtn.setText("▶");
+                    swapIcon((Region) playBtn.getGraphic(), Icons.PLAY, Color.WHITE);
                 }
             });
 
             mediaPlayer.setOnError(() ->
-                setStatus(" Error: " + mediaPlayer.getError().getMessage()));
+                setStatus("Error: " + mediaPlayer.getError().getMessage()));
 
             mediaPlayer.play();
-            playBtn.setText("⏸");
+            swapIcon((Region) playBtn.getGraphic(), Icons.PAUSE, Color.WHITE);
             currentIndex = index;
             playlistView.getSelectionModel().select(index);
             playlistView.scrollTo(index);
 
         } catch (Exception ex) {
-            setStatus(" Cannot play: " + file.getName());
+            setStatus("Cannot play: " + file.getName());
             ex.printStackTrace();
         }
     }
@@ -626,38 +667,49 @@ public class Main extends Application {
         return l;
     }
 
-    private Button makeCtrlBtn(String text) {
-        Button b = new Button(text);
+    private Button makeCtrlBtn(String svgPath, String tooltip) {
+        Button b = new Button();
+        b.setGraphic(icon(svgPath, 18, Color.web(TEXT)));
         b.setMinSize(48, 42);
-        b.setFont(Font.font(16));
         b.setStyle(baseCtrlStyle());
-        b.setOnMouseEntered(e -> b.setStyle(hoverCtrlStyle()));
-        b.setOnMouseExited(e -> b.setStyle(baseCtrlStyle()));
+        b.setTooltip(new Tooltip(tooltip));
+        b.setOnMouseEntered(e -> {
+            b.setStyle(hoverCtrlStyle());
+            swapIcon((Region) b.getGraphic(), svgPath, Color.WHITE);
+        });
+        b.setOnMouseExited(e -> {
+            b.setStyle(baseCtrlStyle());
+            swapIcon((Region) b.getGraphic(), svgPath, Color.web(TEXT));
+        });
         return b;
     }
 
     private Button makePlayBtn() {
-        Button b = new Button("▶");
+        Button b = new Button();
+        b.setGraphic(icon(Icons.PLAY, 22, Color.WHITE));
         b.setMinSize(62, 48);
-        b.setFont(Font.font(20));
         DropShadow glow = new DropShadow(14, Color.web(ACCENT, 0.6));
         glow.setOffsetY(3);
         b.setEffect(glow);
         String base = "-fx-background-color: linear-gradient(to bottom right, #8b5cf6, #6366f1);"
-                + "-fx-text-fill: white; -fx-background-radius: 10; -fx-cursor: hand;";
+                + "-fx-background-radius: 10; -fx-cursor: hand;";
         String hover = "-fx-background-color: linear-gradient(to bottom right, #a78bfa, #818cf8);"
-                + "-fx-text-fill: white; -fx-background-radius: 10; -fx-cursor: hand;";
+                + "-fx-background-radius: 10; -fx-cursor: hand;";
         b.setStyle(base);
+        b.setTooltip(new Tooltip("Play / Pause (Space)"));
         b.setOnMouseEntered(e -> b.setStyle(hover));
         b.setOnMouseExited(e -> b.setStyle(base));
         return b;
     }
 
-    private Button makeActionBtn(String text, String gradient) {
+    private Button makeIconTextBtn(String svgPath, String text, String gradient) {
         Button b = new Button(text);
+        b.setGraphic(icon(svgPath, 14, Color.WHITE));
+        b.setContentDisplay(ContentDisplay.LEFT);
+        b.setGraphicTextGap(8);
         b.setFont(Font.font("System", FontWeight.BOLD, 12));
         b.setStyle("-fx-background-color: " + gradient + ";"
-                + "-fx-text-fill: white; -fx-padding: 9 12;"
+                + "-fx-text-fill: white; -fx-padding: 9 14;"
                 + "-fx-background-radius: 8; -fx-cursor: hand;");
         b.setOnMouseEntered(e -> b.setOpacity(0.85));
         b.setOnMouseExited(e -> b.setOpacity(1.0));
@@ -666,7 +718,6 @@ public class Main extends Application {
 
     private String baseCtrlStyle() {
         return "-fx-background-color: rgba(51,65,85,0.7);"
-                + "-fx-text-fill: #e2e8f0;"
                 + "-fx-background-radius: 10;"
                 + "-fx-border-color: rgba(148,163,184,0.25);"
                 + "-fx-border-radius: 10;"
@@ -675,7 +726,6 @@ public class Main extends Application {
 
     private String hoverCtrlStyle() {
         return "-fx-background-color: rgba(99,102,241,0.55);"
-                + "-fx-text-fill: #e2e8f0;"
                 + "-fx-background-radius: 10;"
                 + "-fx-border-color: #a78bfa;"
                 + "-fx-border-radius: 10;"
